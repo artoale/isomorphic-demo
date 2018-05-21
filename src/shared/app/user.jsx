@@ -20,8 +20,7 @@ class User extends Component {
                 </Helmet>
                 <strong>User page </strong>
                 Async data [
-                    name: {this.props.name} 
-                    email: {this.props.email} 
+                    name: {this.props.name}
                 ]
             </div>
         );

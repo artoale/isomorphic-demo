@@ -11,8 +11,16 @@ import reducers from '../shared/app/redux/reducers/combine';
 import { StaticRouter as Router, matchPath } from 'react-router';
 import thunk from '../shared/app/redux/middleware/thunk';
 import routeBank from '../shared/routes/routes';
+import jsonServer from 'json-server';
+import runMiddleware from 'run-middleware';
+import { useApp } from '../shared/api';
+
+runMiddleware(app);
+useApp(app);
 
 app.use('/dist', express.static('./dist'));
+
+app.use('/api/v1/', jsonServer.router('db.json'));
 
 app.get('*', async (req, res) => {
 	try {
@@ -63,6 +71,7 @@ app.get('*', async (req, res) => {
 			//else send down page with initial state and meta data
 			res.send(renderFullPage(html, preloadedState, helmetData))
 	} catch (error) {
+		console.error('There was an error:', error);
 		res.status(400).send(renderFullPage('An error occured.', {}, {}));
 	}
 });
