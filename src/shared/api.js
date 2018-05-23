@@ -41,3 +41,7 @@ export function get(url) {
 export function useApp(expressApp) {
     app = expressApp;
 }
+
+export function hasApp() {
+    return !!app;
+}

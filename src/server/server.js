@@ -2,7 +2,7 @@ import express from 'express';
 import React from 'react';
 import ReactDOM from 'react-dom/server';
 import helmet from 'react-helmet';
-import App from '../shared/app/app.jsx';
+// import App from '../shared/app/app.jsx';
 const app = express();
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
@@ -10,7 +10,7 @@ import { createStore, applyMiddleware } from 'redux';
 import reducers from '../shared/app/redux/reducers/combine';
 import { StaticRouter as Router, matchPath } from 'react-router';
 import thunk from '../shared/app/redux/middleware/thunk';
-import routeBank from '../shared/routes/routes';
+// import routeBank from '../shared/routes/routes';
 import jsonServer from 'json-server';
 import runMiddleware from 'run-middleware';
 import { useApp } from '../shared/api';
@@ -19,6 +19,7 @@ import webpackConfig from '../../webpack.config';
 import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 const compiler = webpack(webpackConfig);
+import { join } from 'path';
 
 runMiddleware(app);
 useApp(app);
@@ -30,7 +31,6 @@ app.use(webpackDevMiddleware(compiler, {
 	publicPath: webpackConfig.output.publicPath
 }));
 
-
 app.use(webpackHotMiddleware(compiler, {
 	path: '/__webpack_hmr',
 	heartbeat: 10 * 1000
@@ -38,7 +38,18 @@ app.use(webpackHotMiddleware(compiler, {
 app.use('/api/v1/', jsonServer.router('db.json'));
 
 app.get('*', async (req, res) => {
+	let srcDir = join(__dirname, '..');
+
+
+	Object.keys(require.cache).forEach(path => {
+		if (path.indexOf(srcDir) === 0 && path.indexOf('api.js') === -1) {
+			delete require.cache[path];
+		}
+	});
+
 	try {
+		let routeBank = require('../shared/routes/routes').default;
+		let App = require('../shared/app/app.jsx').default;
 		//create new redux store on each request
 		const store = createStore(reducers, {}, applyMiddleware(thunk));
 		let foundPath = null;
@@ -58,15 +69,18 @@ app.get('*', async (req, res) => {
 		// safety check for valid component, if no component we initialize an empty shell.
 		if (!component)
 			component = {};
+
 		// safety check for fetchData function, if no function we give it an empty promise
 		if (!component.fetchData)
 			component.fetchData = () => new Promise(resolve => resolve());
 
 		const dispatch = store.dispatch;
+
 		// meat and bones of our isomorphic application: grabbing async data
 		await component.fetchData({ dispatch, params: (foundPath ? foundPath.params : {}) });
 		//get store state (js object of entire store)
 		let preloadedState = store.getState();
+
 		//context is used by react router, empty by default
 		let context = {};
 		const html = ReactDOM.renderToString(
@@ -90,7 +104,7 @@ app.get('*', async (req, res) => {
 			//else send down page with initial state and meta data
 			res.send(renderFullPage(html, preloadedState, helmetData))
 	} catch (error) {
-		console.error('There was an error:', error);
+		console.error('There was an error:', error.stack);
 		res.status(400).send(renderFullPage('An error occured.', {}, {}));
 	}
 });

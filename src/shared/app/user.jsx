@@ -25,7 +25,7 @@ class User extends Component {
                     <meta charSet="utf-8" />
                     <title>User</title>
                 </Helmet>
-                <strong>User pages {this.props.name} </strong>
+                <strong>User: {this.props.name} </strong>
                 <p>User id is {this.props.id}</p>
             </div>
         );

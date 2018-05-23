@@ -1,6 +1,9 @@
 import { Types } from '../constants/user-types';
 import Request from 'axios';
-import { get } from '../../../api.js';
+import { get, hasApp } from '../../../api.js';
+
+
+console.log('hasApp: ', hasApp());
 
 export function getNameIfNeeded(id) {
     return async function (dispatch, getState) {
