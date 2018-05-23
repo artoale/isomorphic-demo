@@ -14,12 +14,27 @@ import routeBank from '../shared/routes/routes';
 import jsonServer from 'json-server';
 import runMiddleware from 'run-middleware';
 import { useApp } from '../shared/api';
+import webpack from 'webpack';
+import webpackConfig from '../../webpack.config';
+import webpackDevMiddleware from 'webpack-dev-middleware';
+import webpackHotMiddleware from 'webpack-hot-middleware';
+const compiler = webpack(webpackConfig);
 
 runMiddleware(app);
 useApp(app);
 
 app.use('/dist', express.static('./dist'));
 
+app.use(webpackDevMiddleware(compiler, {
+	noinfo: true,
+	publicPath: webpackConfig.output.publicPath
+}));
+
+
+app.use(webpackHotMiddleware(compiler, {
+	path: '/__webpack_hmr',
+	heartbeat: 10 * 1000
+}));
 app.use('/api/v1/', jsonServer.router('db.json'));
 
 app.get('*', async (req, res) => {
@@ -39,14 +54,17 @@ app.get('*', async (req, res) => {
 				)
 				return foundPath;
 			}) || {};
+
 		// safety check for valid component, if no component we initialize an empty shell.
 		if (!component)
 			component = {};
 		// safety check for fetchData function, if no function we give it an empty promise
 		if (!component.fetchData)
 			component.fetchData = () => new Promise(resolve => resolve());
+
+		const dispatch = store.dispatch;
 		// meat and bones of our isomorphic application: grabbing async data
-		await component.fetchData({ store, params: (foundPath ? foundPath.params : {}) });
+		await component.fetchData({ dispatch, params: (foundPath ? foundPath.params : {}) });
 		//get store state (js object of entire store)
 		let preloadedState = store.getState();
 		//context is used by react router, empty by default
@@ -61,9 +79,10 @@ app.get('*', async (req, res) => {
 		//render helmet data aka meta data in <head></head>
 		const helmetData = helmet.renderStatic();
 		//check context for url, if url exists then react router has ran into a redirect
-		if (context.url)
+		if (context.url) {
 			//process redirect through express by redirecting
 			res.redirect(context.status, 'http://' + req.headers.host + context.url);
+		}
 		else if (foundPath && foundPath.path == '/404')
 			//if 404 then send our custom 404 page with initial state and meta data, this is needed for status code 404
 			res.status(404).send(renderFullPage(html, preloadedState, helmetData))

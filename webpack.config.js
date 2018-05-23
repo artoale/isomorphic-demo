@@ -4,12 +4,18 @@ const path = require('path'),
 module.exports = {
     context: path.resolve(__dirname, './src'),
     entry: {
-        app: './client/index.js',
+        app: [
+            'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
+            './client/index.js'
+        ],
     },
     output: {
         filename: '[name].bundle.js',
-        path: path.resolve(__dirname, './dist/assets'),
-        publicPath: '/assets',
+        path: path.resolve(__dirname, './dist/assets/'),
+        publicPath: '/dist/assets/',
+    },
+    resolve: {
+        extensions: ['.js', '.jsx']
     },
     module: {
         rules: [
@@ -18,10 +24,13 @@ module.exports = {
                 exclude: [/node_modules/],
                 use: [{
                     loader: 'babel-loader',
-                    options: { presets: ['es2015', 'react'], plugins: ['transform-object-rest-spread', 'async-to-promises'] }
                 }],
             }
             //loaders for other file types can go here
         ]
-    }
+    },
+    plugins: [
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.NoEmitOnErrorsPlugin()
+    ]
 }

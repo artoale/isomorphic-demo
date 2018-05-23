@@ -1,6 +1,8 @@
 import Navbar from '../app/navbar.jsx';
 import Home from '../app/home.jsx';
+import Users from '../app/users.jsx';
 import User from '../app/user.jsx';
+import FourOFour from '../app/404.jsx';
 
 export default {
     routes: [
@@ -10,9 +12,18 @@ export default {
             exact: true
         },
         {
-            path: '/user',
-            component: User,
+            path: '/users',
+            component: Users,
             exact: true
+        },
+        {
+            path: '/user/:id',
+            component: User,
+            exact: true,
+        },
+        {
+            component: FourOFour,
+            exact: false,
         }
     ],
     redirects: [
@@ -22,4 +33,4 @@ export default {
             status: 301
         }
     ]
-} 
+}

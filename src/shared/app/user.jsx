@@ -5,12 +5,19 @@ import { Helmet } from 'react-helmet';
 import * as actions from './redux/actions/user-actions'
 
 class User extends Component {
-    static fetchData({ store }) {
-        return store.dispatch(actions.getName(1));
+    static fetchData({ dispatch, params }) {
+        if (params.id) {
+            return dispatch(actions.getNameIfNeeded(params.id));
+        }
     }
+
     componentDidMount() {
-        this.props.getName(1);
+        this.constructor.fetchData({
+            dispatch: this.props.dispatch,
+            params: this.props.match.params
+        });
     }
+
     render() {
         return (
             <div>
@@ -18,20 +25,24 @@ class User extends Component {
                     <meta charSet="utf-8" />
                     <title>User</title>
                 </Helmet>
-                <strong>User page </strong>
-                Async data [
-                    name: {this.props.name}
-                ]
+                <strong>User pages {this.props.name} </strong>
+                <p>User id is {this.props.id}</p>
             </div>
         );
     }
 }
-function mapStateToProps(state) {
+function mapStateToProps(state, ownProps) {
+    const id = ownProps.match.params.id;
     return {
-        ...state.user,
+        ...state.users[id],
+        id,
     }
 }
 function mapDispatchToProps(dispatch) {
-    return bindActionCreators(actions, dispatch);
+    const boundActionCreators = bindActionCreators(actions, dispatch);
+    return {
+        ...boundActionCreators,
+        dispatch,
+    }
 }
 export default connect(mapStateToProps, mapDispatchToProps, null, { withRef: true })(User);
